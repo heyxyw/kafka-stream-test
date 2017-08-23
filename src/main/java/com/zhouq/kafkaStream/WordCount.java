@@ -11,18 +11,74 @@ import org.apache.kafka.streams.kstream.KStreamBuilder;
 import java.util.Arrays;
 import java.util.Properties;
 
+
+
 /**
  * @author zhouq
  * @email zhouq@daqsoft.com
  * @date 2017-08-22 12:43
  * @Version:
- * @Describe:
+ * @Describe: 计算单词数量
+// * 1.启动zookeeper
+// *      linux: cd 到 zookeeper 的bin 目录下 执行 zkServer.sh start
+// *      window: cd 到 zookeeper 的bin 目录下 执行 zkServer
+// *
+// * 2.启动 kafka
+// *      linux: bin/kafka-server-start.sh config/server.properties
+// *      windows: .\bin\windows\kafka-server-start.bat .\config\server.properties
+// *
+// * 3.创建 主题 zhouq streams-wordcount-output RekeyedIntermediateTopic (可以不创建)
+// *      linux: bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic zhouq
+// *      windows: .\bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic zhouq
+// *
+// * 4.创建 Producer (消息生产者)
+// *      linux: bin/kafka-console-producer.sh --broker-list hadoop1:9092 --topic zhouq
+// *      windows: .\bin\windows\kafka-console-producer.bat --broker-list localhost:9092 --topic zhouq
+// *
+// * 5.创建 Consumer(消息消费者)
+// *      linux: bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic streams-wordcount-output
+// *      window: .\bin\windows\kafka-console-consumer.bat  --zookeeper localhost:2181 --topic streams-wordcount-output
+// *
+// *   注: 1.如果 streams-wordcount-output 主题 未创建而导致消费错误.请手动创建 streams-wordcount-output
+// *       2.下面的计数结果输出到 主题 streams-wordcount-output 后.消费者需要一些格式化参数 才能显示成如下格式:
+//*             aaa  1
+//*             bbb  2
+//*             aaa  3
+//*             ccc  1
+// *          否则 消费者页面会出现序列化问题.结果不会出现预期格式
+// *       3.若要消费者打印如上格式 请使用以下命令
+// *          linux:
+// *                 bin/kafka-console-consumer.sh --zookeeper localhost:2181 \
+//                        --topic streams-wordcount-output \
+//                        --from-beginning \
+//                        --formatter kafka.tools.DefaultMessageFormatter \
+//                        --property print.key=true \
+//                        --property print.key=true \
+//                        --property key.deserializer=org.apache.kafka.common.serialization.StringDeserializer \
+//                        --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
+//
+//            windows:
+//                    .\bin\windows\kafka-console-consumer.bat  --zookeeper localhost:2181
+//                        --topic streams-wordcount-output
+//                        --from-beginning
+//                        --formatter kafka.tools.DefaultMessageFormatter
+//                        --property print.key=true
+//                        --property print.key=true
+//                        --property key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+//                        --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
+//
+//        4.若当前主题在之前接收消息使用的是默认序列化方式.当新启动的消费者又使用的是上面 第三点中的配置 将会抛出类似如下错误
+//            ERROR Unknown error when running consumer:  (kafka.tools.ConsoleConsumer$)
+//            org.apache.kafka.common.errors.SerializationException: Size of data received by LongDeserializer is not 8
+//
+//        解决办法 将数据重新写入一个新开的topic 中.
+
+ *
+ *
+ *
  */
 public class WordCount {
     public static void main(String[] args) throws InterruptedException {
-
-
-
 
         Properties streamsConfiguration = new Properties();
         // Give the Streams application a unique name.  The name must be unique in the Kafka cluster
@@ -78,7 +134,7 @@ public class WordCount {
                 .toStream();
 
         // Write the `KStream<String, Long>` to the output topic.
-        wordCounts.to(stringSerde, longSerde, "wordCount");
+        wordCounts.to(stringSerde, longSerde, "streams-wordcount-output");
 
         // Now that we have finished the definition of the processing topology we can actually run
         // it via `start()`.  The Streams application as a whole can be launched just like any
